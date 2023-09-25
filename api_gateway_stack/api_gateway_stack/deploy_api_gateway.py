@@ -11,7 +11,7 @@ from  aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration
 
 class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
 
-    def __init__(self, scope: Construct,  id: str, lambda_dict, **kwargs) -> None:
+    def __init__(self, scope: Construct,  id: str, lambda_dict, auth_dict,**kwargs) -> None:
         super().__init__(scope, id ,**kwargs)
 
         code_bucket = cdk.aws_s3.Bucket(
@@ -40,8 +40,14 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
             "mse-chat-authorizer", authorizer_lambda,
             response_types=[HttpLambdaResponseType.SIMPLE]
             )
+        
+        #auth APIs
+        InitiateAuth = auth_dict['Initiate_auth']
+        InitiateAuth_integration = HttpLambdaIntegration("InitiateAuthIntegration", InitiateAuth)
 
-
+        Postlogin = auth_dict['postlogin']
+        Postlogin_integration = HttpLambdaIntegration("InitiateAuthIntegration", Postlogin)
+        ####
         mockGetUserProfile= lambda_dict['Get_User_Profile']
         GetUserProfile_integration = HttpLambdaIntegration("mockProfileIntegration", mockGetUserProfile)
         
@@ -81,70 +87,83 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
             'HttpApi',
         )
 
+        #authentication
         http_api.add_routes(
-            path="/user/profile",
+            path = "/api/auth/initiate_auth",
+            methods=[apigatewayv2.HttpMethod.GET],
+            integration = InitiateAuth_integration
+        )
+        http_api.add_routes(
+            path = "/api/auth/postlogin",
+            methods=[apigatewayv2.HttpMethod.GET],
+            integration = Postlogin_integration
+        )
+        #mock API
+        http_api.add_routes(
+            path="/api/user/profile",
             methods=[apigatewayv2.HttpMethod.GET],
             integration=GetUserProfile_integration,
             #authorizer= authorizer
         )
 
         http_api.add_routes(
-            path="/quiz/list",
+            path="/api/quiz/list",
             methods=[apigatewayv2.HttpMethod.GET],
             integration=GetQuizListByUser_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
-            path="/quiz/detail",
+            path="/api/quiz/detail",
             methods=[apigatewayv2.HttpMethod.GET],
             integration=GetQuizListByUser_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
-            path="/quiz",
+            path="/api/quiz",
             methods = [apigatewayv2.HttpMethod.POST],
             integration=CreateQuiz_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
-            path="/quiz",
+            path="/api/quiz",
             methods = [apigatewayv2.HttpMethod.PUT],
             integration=UpdateQuiz_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
-            path="/quiz",
+            path="/api/quiz",
             methods = [apigatewayv2.HttpMethod.DELETE],
             integration=RemoveQuiz_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
-            path="/quiz/question",
+            path="/api/quiz/question",
             methods = [apigatewayv2.HttpMethod.POST],
             integration=CreateQuizQuestion_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
-            path="/quiz/question",
+            path="/api/quiz/question",
             methods = [apigatewayv2.HttpMethod.DELETE],
             integration=RemoveQuizQuestion_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
-            path="/quiz/question",
+            path="/api/quiz/question",
             methods = [apigatewayv2.HttpMethod.PUT],
             integration=ModifyQuizQuestion_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
-            path="/quiz/submit",
+            path="/api/quiz/submit",
             methods = [apigatewayv2.HttpMethod.POST],
             integration=SubmitQuiz_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
-            path="/quiz/question/correct",
+            path="/api/quiz/question/correct",
             methods = [apigatewayv2.HttpMethod.GET],
             integration=GetQuizQuestionCorrectedCount_integration,
             #authorizer= authorizer
         )
+        
