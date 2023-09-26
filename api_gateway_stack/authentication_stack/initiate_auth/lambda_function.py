@@ -11,22 +11,26 @@ def random_hex_bytes(n_bytes):
   """Create a hex encoded string of random bytes"""
   return os.urandom(n_bytes).hex()
 
+def cognito_location(csrf_state):
+  return  f"{os.environ.get('AWS_COGNITO_DOMAIN')}/login?response_type=code&client_id={os.environ.get('COGNITO_USER_POOL_CLIENT_ID')}&state={csrf_state}&redirect_uri={os.environ.get('APP_REDIRECT_URL')}" 
+
 def lambda_handler(event, context):
     print(str(event))
     cookie = {}
+    csrf_state = random_hex_bytes(8)
     #create a csrf state to prevent csrf login
-    cookie['csrf_state'] = random_hex_bytes(8)
+    cookie['csrf_state'] = csrf_state
     if 'queryStringParameters' in event:
         if 'next' in event['queryStringParameters']:
           next_page = event['queryStringParameters']['next']
           if next_page and is_safe_url(next_page): 
             cookie['next']=next_page
     return {
-           "cookies" : [f"{key}={cookie[key]}; Path=/; Secure; HttpOnly" for key in cookie.keys()],
+           "cookies" : [f"{key}={cookie[key]}; SameSite=Strict; Path=/; Secure; HttpOnly" for key in cookie.keys()],
           "isBase64Encoded": False,
           "statusCode": 302,
           "headers": {
-               "Location": "https://issse31ptdmss.xyz/"
+               "Location": f"{cognito_location(csrf_state)}"
           },
           "body": ""
      }

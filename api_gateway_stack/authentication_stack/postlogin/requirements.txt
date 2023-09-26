@@ -1,2 +1,5 @@
+urllib3<2
+python-jose[cryptography]
 pyjwt
 requests
+pycryptodome

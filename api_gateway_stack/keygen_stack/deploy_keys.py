@@ -3,43 +3,43 @@ import os
 from constructs import Construct
 import json
 import uuid
-####pycryptodome required
+####pycryptodome, jwcrypto required
 
 from Crypto.PublicKey import RSA
+from jwcrypto import jwk
+
+generate_new_keys = False
 
 APP_URL = 'https://issse31ptdmss.xyz/' #change if necessary, or abstract to env
 
 class DeployKeyStack(cdk.Stack):
      def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
+        self.private_key_param =None
+        
+        if generate_new_keys:
+            #generate private key
+            key = RSA.generate(2048)
+            key_file = open('private_key.pem','wb')
+            key_file.write(key.export_key('PEM'))
+            key_file.close()
+        else:
+            #read private key
+            key_file = open('private_key.pem','r')
+            key = RSA.import_key(key_file.read())
+            key_file.close()
 
-        #generate private key
-        key = RSA.generate(2048)
-
-        #generate key passphrase
-        key_passphrase = str(uuid.uuid4())
 
         #store the key passphrase (note: for production use AWS KMS to encrypt the private key instead of SSM. SSM parameter store is free but KMS cost USD$1/key)
-
-        private_key_passphrase = cdk.aws_ssm.StringParameter(
-            self,
-            'PrivateKeyPassphrase',
-            parameter_name='/APP/PRIVATE_KEY_PASSPHRASE',
-            string_value=key_passphrase
-        )
 
         private_key_param = cdk.aws_ssm.StringParameter(
             self,
             'PrivateKeyParameter',
-            parameter_name='/APP/ENCRYPTED_PRIVATE_KEY',
-            string_value=key.export_key(passphrase=key_passphrase, pkcs=8,protection="scryptAndAES128-CBC").decode('utf-8')
+            parameter_name='/APP/PRIVATE_KEY',
+            string_value=key.export_key().decode('utf-8')
         )
 
-        public_key = {
-            'kty': 'RSA',
-            'n': key.n,
-            'e': key.e,
-        }
+        public_key = jwk.JWK.from_pem(bytes(key.export_key().decode('utf-8'), 'utf-8')).export_public()
 
         public_key_bucket = cdk.aws_s3.Bucket(
             self,
@@ -58,9 +58,12 @@ class DeployKeyStack(cdk.Stack):
             principals=[cdk.aws_iam.ArnPrincipal('*')]
         ))
         deployment = cdk.aws_s3_deployment.BucketDeployment(self, "DeployPublicKey",
-            sources=[cdk.aws_s3_deployment.Source.json_data('public_key.json', json.dumps(public_key))],
+            sources=[cdk.aws_s3_deployment.Source.json_data('public_key.json', public_key)],
             destination_bucket=public_key_bucket,
         )
+        
+        #make it exportable
+        self.private_key_param = private_key_param
 
 
 
