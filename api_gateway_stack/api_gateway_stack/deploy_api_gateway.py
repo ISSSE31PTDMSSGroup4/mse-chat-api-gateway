@@ -115,7 +115,7 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
         http_api.add_routes(
             path="/api/quiz/detail",
             methods=[apigatewayv2.HttpMethod.GET],
-            integration=GetQuizListByUser_integration,
+            integration=GetQuizDetail_integration,
             #authorizer= authorizer
         )
         http_api.add_routes(
