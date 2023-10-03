@@ -24,9 +24,8 @@ class DeployAuthStack(cdk.Stack):
             runtime=cdk.aws_lambda.Runtime.PYTHON_3_8,
             handler='lambda_function.lambda_handler',
             code=cdk.aws_lambda.Code.from_asset(os.path.join(os.path.dirname(__file__),'initiate_auth')), 
-            timeout=cdk.Duration.seconds(10),
+            timeout=cdk.Duration.seconds(3),
             environment={
-                'COGNITO_USER_POOL_CLIENT_ID':config.COGNITO_USER_POOL_CLIENT_ID,
                 'COGNITO_USER_POOL_CLIENT_ID':config.COGNITO_USER_POOL_CLIENT_ID,
                 'AWS_COGNITO_DOMAIN':config.AWS_COGNITO_DOMAIN,
                 'APP_REDIRECT_URL':config.APP_REDIRECT_URL
@@ -59,4 +58,19 @@ class DeployAuthStack(cdk.Stack):
 
 
         self.lambda_dict["postlogin"]=Postlogin_Lambda
+        
+        Logout_Lambda = cdk.aws_lambda.Function(
+            self,
+            'LogoutLambda',
+            runtime=cdk.aws_lambda.Runtime.PYTHON_3_8,
+            handler='lambda_function.lambda_handler',
+            code=cdk.aws_lambda.Code.from_asset(os.path.join(os.path.dirname(__file__),'logout')), 
+            timeout=cdk.Duration.seconds(3),
+            environment={
+                'COGNITO_USER_POOL_CLIENT_ID':config.COGNITO_USER_POOL_CLIENT_ID,
+                'AWS_COGNITO_DOMAIN':config.AWS_COGNITO_DOMAIN,
+                'APP_URL':config.APP_URL
+            }
+        )
+        self.lambda_dict["Logout"]=Logout_Lambda
 

@@ -46,7 +46,9 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
         InitiateAuth_integration = HttpLambdaIntegration("InitiateAuthIntegration", InitiateAuth)
 
         Postlogin = auth_dict['postlogin']
-        Postlogin_integration = HttpLambdaIntegration("InitiateAuthIntegration", Postlogin)
+        Postlogin_integration = HttpLambdaIntegration("PostLoginIntegration", Postlogin)
+        Logout = auth_dict['Logout']
+        Logout_integration = HttpLambdaIntegration("LogoutIntegration", Logout)
         ####
         mockGetUserProfile= lambda_dict['Get_User_Profile']
         GetUserProfile_integration = HttpLambdaIntegration("mockProfileIntegration", mockGetUserProfile)
@@ -97,6 +99,11 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
             path = "/api/auth/postlogin",
             methods=[apigatewayv2.HttpMethod.GET],
             integration = Postlogin_integration
+        )
+        http_api.add_routes(
+            path = "/api/auth/logout",
+            methods=[apigatewayv2.HttpMethod.GET],
+            integration = Logout_integration,
         )
         #mock API
         http_api.add_routes(
