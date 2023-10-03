@@ -39,8 +39,7 @@ class DeployKeyStack(cdk.Stack):
             string_value=key.export_key().decode('utf-8')
         )
 
-        public_key = jwk.JWK.from_pem(bytes(key.export_key().decode('utf-8'), 'utf-8')).export_public()
-
+        public_key = jwk.JWK.from_pem(bytes(key.export_key().decode('utf-8'), 'utf-8')).export_public(as_dict=True)
         public_key_bucket = cdk.aws_s3.Bucket(
             self,
             'msechat_public_key_bucket',
