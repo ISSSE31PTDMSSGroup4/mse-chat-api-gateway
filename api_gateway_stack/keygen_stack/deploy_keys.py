@@ -38,6 +38,12 @@ class DeployKeyStack(cdk.Stack):
             parameter_name='/APP/PRIVATE_KEY',
             string_value=key.export_key().decode('utf-8')
         )
+        public_key_param = cdk.aws_ssm.StringParameter(
+            self,
+            'PublicKeyParameter',
+            parameter_name = '/APP/PUBLIC_KEY',
+            string_value=key.public_key().export_key().decode('utf-8')
+        )
 
         public_key = jwk.JWK.from_pem(bytes(key.export_key().decode('utf-8'), 'utf-8')).export_public(as_dict=True)
         public_key_bucket = cdk.aws_s3.Bucket(
@@ -63,6 +69,7 @@ class DeployKeyStack(cdk.Stack):
         
         #make it exportable
         self.private_key_param = private_key_param
+        self.public_key_param = public_key_param
 
 
 

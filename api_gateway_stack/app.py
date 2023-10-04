@@ -26,7 +26,7 @@ DeployKeyStackApp = DeployKeyStack(app, "DeployKeyStack",
 
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
     )
-DeployAuthStack = DeployAuthStack(app,"AuthenticationStack", APP_PRIVATE_KEY_SSM_PARAM = DeployKeyStackApp.private_key_param)
+DeployAuthStack = DeployAuthStack(app,"AuthenticationStack", APP_PRIVATE_KEY_SSM_PARAM = DeployKeyStackApp.private_key_param, APP_PUBLIC_KEY_SSM_PARAM = DeployKeyStackApp.public_key_param)
 MockLambdaStackApp = MockLambdaStack(app, "MockLambdaStack",
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
