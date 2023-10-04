@@ -142,7 +142,7 @@ def lambda_handler(event, context):
   access_token = create_access_token(sub = id_token['email'], expiry = int(os.environ.get('ACCESS_TOKEN_EXPIRY')), csrf = csrf)
 
   #construct response object
-  cookie_objects = [f'access_token_cookie={access_token}; SameSite=Strict; Path=/; Secure; HttpOnly',f'csrf={csrf}; Path=/;','csrf_state=deleted; Path=/; Max-Age=0;','next=deleted; Path=/; Max-Age=0;','logged_in=true; Path=/;',f"access_token_expires={int(datetime.datetime.timestamp(datetime.datetime.now() + datetime.timedelta(seconds=int(os.environ.get('ACCESS_TOKEN_EXPIRY')))))}; Path=/;",f'debug_user={id_token['email']}; Path=/;']#remove debug when done
+  cookie_objects = [f'access_token_cookie={access_token}; SameSite=Strict; Path=/; Secure; HttpOnly',f'csrf={csrf}; Path=/;','csrf_state=deleted; Path=/; Max-Age=0;','next=deleted; Path=/; Max-Age=0;','logged_in=true; Path=/;',f"access_token_expires={int(datetime.datetime.timestamp(datetime.datetime.now() + datetime.timedelta(seconds=int(os.environ.get('ACCESS_TOKEN_EXPIRY')))))}; Path=/;",f"debug_user={id_token['email']}; Path=/;"]#remove debug when done
 
   #return to origin or next
   return { 
