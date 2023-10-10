@@ -1,0 +1,3 @@
+urllib3<2
+pyjwt
+pyjwt[crypto]

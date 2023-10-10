@@ -45,7 +45,7 @@ MockLambdaStackApp = MockLambdaStack(app, "MockLambdaStack",
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
     )
 
-ApiGatewayWithLambdaAuthorizerStack(app, "ApiGatewayWithLambdaAuthorizerStack", lambda_dict = MockLambdaStackApp.lambda_dict, auth_dict = DeployAuthStack.lambda_dict
+ApiGatewayWithLambdaAuthorizerStack(app, "ApiGatewayWithLambdaAuthorizerStack", lambda_dict = MockLambdaStackApp.lambda_dict, auth_dict = DeployAuthStack.lambda_dict, APP_PUBLIC_KEY_SSM_PARAM = DeployKeyStackApp.public_key_param
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.

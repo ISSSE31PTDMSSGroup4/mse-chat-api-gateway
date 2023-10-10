@@ -2,43 +2,45 @@
 import aws_cdk as cdk
 import os
 from constructs import Construct
-
+#config contains confidential information and is omitted
+try:
+  from . import config
+except:
+  import config
 #experimental packages that need to be installed seperately
 import aws_cdk.aws_apigatewayv2_alpha as apigatewayv2
 from aws_cdk.aws_apigatewayv2_authorizers_alpha import HttpLambdaAuthorizer, HttpLambdaResponseType
 from  aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration
 
+####requires aws-lambda-python-alpha
+import aws_cdk.aws_lambda_python_alpha as python
+
 
 class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
 
-    def __init__(self, scope: Construct,  id: str, lambda_dict, auth_dict,**kwargs) -> None:
+    def __init__(self, scope: Construct,  id: str, lambda_dict, auth_dict, APP_PUBLIC_KEY_SSM_PARAM,**kwargs) -> None:
         super().__init__(scope, id ,**kwargs)
 
-        code_bucket = cdk.aws_s3.Bucket(
-            self,
-            'msechat_authorizer_lambda_code',
-            removal_policy=cdk.RemovalPolicy.DESTROY  # For demonstration purposes only
-        )
-        # Define the Lambda function for authorization
-        authorizer_lambda = cdk.aws_lambda.Function(
+        authorizer_lambda = python.PythonFunction(
             self,
             'AuthorizerLambda',
-            runtime=cdk.aws_lambda.Runtime.PYTHON_3_8,
-            handler='index.lambda_handler',
-            code=cdk.aws_lambda.Code.from_asset(os.path.join(os.path.dirname(__file__), 'authorizer_lambda')), 
-            timeout=cdk.Duration.seconds(10),
+            entry=f"{os.path.join(os.path.dirname(__file__),'authorizer_lambda')}",
+            index="lambda_function.py",
+            runtime=cdk.aws_lambda.Runtime.PYTHON_3_9, #needs 3.10 for urllib error
+            handler="lambda_handler",
+            timeout=cdk.Duration.seconds(5),
+            memory_size=256,
+            environment={
+                'APP_PUBLIC_KEY_SSM_PARAM_ARN':APP_PUBLIC_KEY_SSM_PARAM.parameter_name,
+                'APP_URL' : config.APP_URL
+            }
         )
-
-        # Grant necessary permissions to the Lambda function
-        code_bucket.grant_read(authorizer_lambda)
-        authorizer_lambda.add_to_role_policy(cdk.aws_iam.PolicyStatement(
-            actions=["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
-            resources=["*"]
-        ))
-
+        APP_PUBLIC_KEY_SSM_PARAM.grant_read(authorizer_lambda)
         authorizer = HttpLambdaAuthorizer(
             "mse-chat-authorizer", authorizer_lambda,
-            response_types=[HttpLambdaResponseType.SIMPLE]
+            response_types=[HttpLambdaResponseType.SIMPLE],
+            results_cache_ttl = cdk.Duration.minutes(15),
+            identity_source=['$request.header.cookie']
             )
         
         #auth APIs
@@ -119,7 +121,7 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
             path="/api/user/profile",
             methods=[apigatewayv2.HttpMethod.GET],
             integration=GetUserProfile_integration,
-            #authorizer= authorizer
+            authorizer= authorizer
         )
 
         http_api.add_routes(
