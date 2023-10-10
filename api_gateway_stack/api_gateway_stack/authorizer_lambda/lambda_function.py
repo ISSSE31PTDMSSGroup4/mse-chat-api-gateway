@@ -24,7 +24,7 @@ def unauthorized(event_id,error):
     return {
         "isAuthorized": False,
         "context":{
-            "event_id": error_body,
+            "event_id": event_id,
             "error":error
         }
     }

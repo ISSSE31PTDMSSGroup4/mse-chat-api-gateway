@@ -10,7 +10,7 @@ except:
 #experimental packages that need to be installed seperately
 import aws_cdk.aws_apigatewayv2_alpha as apigatewayv2
 from aws_cdk.aws_apigatewayv2_authorizers_alpha import HttpLambdaAuthorizer, HttpLambdaResponseType
-from  aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration
+from  aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration, HttpUrlIntegration
 
 ####requires aws-lambda-python-alpha
 import aws_cdk.aws_lambda_python_alpha as python
@@ -55,9 +55,14 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
         Refresh_integration = HttpLambdaIntegration("RefreshTokenIntegration",Refresh)
 
         ####
-        mockGetUserProfile= lambda_dict['Get_User_Profile']
-        GetUserProfile_integration = HttpLambdaIntegration("mockProfileIntegration", mockGetUserProfile)
         
+        #not in use
+        #mockGetUserProfile= lambda_dict['Get_User_Profile']
+        #GetUserProfile_integration = HttpLambdaIntegration("mockProfileIntegration", mockGetUserProfile)
+        #####
+        #for now, manually map request.path.proxy, because not working for some reason. not needed for prod 
+        user_integration = HttpUrlIntegration("user_backend_integration_REMOVE_IN_PROD", config.API_URL, parameter_mapping = apigatewayv2.ParameterMapping().append_header("X-USER",apigatewayv2.MappingValue.context_variable("authorizer.user")).overwrite_path(apigatewayv2.MappingValue.request_path()))
+
         mockGetQuizListByUser=lambda_dict['Get_Quiz_List_By_User']
         GetQuizListByUser_integration = HttpLambdaIntegration("mockGetQuizListByUserIntegration",mockGetQuizListByUser)
 
@@ -116,13 +121,22 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
             integration = Refresh_integration,
             #authorizer = authorizer
         )
+        #backend integrations(change to full backend by prod)
+        http_api.add_routes(
+            path="/api/{proxy+}",
+            methods=[apigatewayv2.HttpMethod.ANY],
+            integration=user_integration,
+            authorizer= authorizer
+        )
         #mock API
+        '''
         http_api.add_routes(
             path="/api/user/profile",
             methods=[apigatewayv2.HttpMethod.GET],
             integration=GetUserProfile_integration,
-            authorizer= authorizer
+            #authorizer= authorizer
         )
+        '''
 
         http_api.add_routes(
             path="/api/quiz/list",
