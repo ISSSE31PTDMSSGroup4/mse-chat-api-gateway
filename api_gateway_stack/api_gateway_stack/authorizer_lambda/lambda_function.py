@@ -21,6 +21,7 @@ def decode_token(access_token):
     return token
 
 def unauthorized(event_id,error):
+    print("unauthorized: "+error)
     return {
         "isAuthorized": False,
         "context":{
