@@ -61,8 +61,9 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
         #GetUserProfile_integration = HttpLambdaIntegration("mockProfileIntegration", mockGetUserProfile)
         #####
         #for now, manually map request.path.proxy, because not working for some reason. not needed for prod 
-        user_integration = HttpUrlIntegration("user_backend_integration_REMOVE_IN_PROD", config.API_URL, parameter_mapping = apigatewayv2.ParameterMapping().append_header("X-USER",apigatewayv2.MappingValue.context_variable("authorizer.user")).overwrite_path(apigatewayv2.MappingValue.request_path()))
+        backend_integration = HttpUrlIntegration("backend_integration", config.API_URL, parameter_mapping = apigatewayv2.ParameterMapping().append_header("X-USER",apigatewayv2.MappingValue.context_variable("authorizer.user")).overwrite_path(apigatewayv2.MappingValue.request_path()))
 
+        '''
         mockGetQuizListByUser=lambda_dict['Get_Quiz_List_By_User']
         GetQuizListByUser_integration = HttpLambdaIntegration("mockGetQuizListByUserIntegration",mockGetQuizListByUser)
 
@@ -92,7 +93,7 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
 
         mockGetQuizQuestionCorrectedCount = lambda_dict['Get_Quiz_Question_Corrected_Count']
         GetQuizQuestionCorrectedCount_integration = HttpLambdaIntegration('mockGetQuizQuestionCorrectedCountIntegration',mockGetQuizQuestionCorrectedCount)
-
+        '''
 
         http_api = apigatewayv2.HttpApi(
             self,
@@ -119,13 +120,13 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
             path = "/api/auth/refresh",
             methods = [apigatewayv2.HttpMethod.GET],
             integration = Refresh_integration,
-            #authorizer = authorizer
+            authorizer = authorizer
         )
-        #backend integrations(change to full backend by prod)
+        #backend integration
         http_api.add_routes(
             path="/api/{proxy+}",
             methods=[apigatewayv2.HttpMethod.ANY],
-            integration=user_integration,
+            integration=backend_integration,
             authorizer= authorizer
         )
         #mock API
@@ -136,7 +137,7 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
             integration=GetUserProfile_integration,
             #authorizer= authorizer
         )
-        '''
+        
 
         http_api.add_routes(
             path="/api/quiz/list",
@@ -198,4 +199,4 @@ class ApiGatewayWithLambdaAuthorizerStack(cdk.Stack):
             integration=GetQuizQuestionCorrectedCount_integration,
             #authorizer= authorizer
         )
-        
+        '''
